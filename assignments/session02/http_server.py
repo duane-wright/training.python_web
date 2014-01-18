@@ -1,15 +1,18 @@
 import socket
 import sys
+import mimetypes
+import os
+import urllib
 
 
-def response_ok():
+def response_ok(body, mimetype):
     """returns a basic HTTP response"""
     resp = []
     resp.append("HTTP/1.1 200 OK")
     resp.append("Content-Type: text/plain")
     resp.append("")
     resp.append("this is a pretty minimal response")
-    return "\r\n".join(resp)
+    return ("\r\n".join(resp), body, mimetype)
 
 
 def response_method_not_allowed():
@@ -18,14 +21,55 @@ def response_method_not_allowed():
     resp.append("HTTP/1.1 405 Method Not Allowed")
     resp.append("")
     return "\r\n".join(resp)
+    
+    
+def response_not_found():
+    """returns a 404 Response Not Found response"""
+    resp = []
+    resp.append("HTTP/1.1 404 Response Not Found")
+    resp.append("")
+    return "\r\n".join(resp)
 
 
 def parse_request(request):
     first_line = request.split("\r\n", 1)[0]
-    method, uri, protocol = first_line.split()
+    """here is the uri"""
+    method, uri, protocol = first_line.split()  
     if method != "GET":
         raise NotImplementedError("We only accept GET")
     print >>sys.stderr, 'request is okay'
+    return uri
+
+
+def resolve_uri(uri):
+	
+	dirlist = []
+	
+	mimetype = ""
+	
+	filecont = ""
+	
+	if os.path.isdir(uri):
+	
+		dirlist = os.listdir(uri)
+		
+		mimetype = "text/plain"
+		
+		return (dirlist, mimetype)
+	
+	elif os.path.isfile(uri):
+	
+		filecont = uri.read()
+		
+		url = urllib.pathname2url(uri)
+		
+		mimetype = mimetypes.guess_type(url)
+		
+		return (filecont, mimetype)
+		
+	else:
+	
+		response_not_found()
 
 
 def server():
@@ -51,10 +95,17 @@ def server():
 
                 try:
                     parse_request(request)
+                    
                 except NotImplementedError:
                     response = response_method_not_allowed()
+                
+                # response_ok(body, mimetype)
+                
                 else:
-                    response = response_ok()
+                    
+                    body, ext = resolve_uri(request)
+                    
+                    response = response_ok(body, ext)
 
                 print >>sys.stderr, 'sending response'
                 conn.sendall(response)
