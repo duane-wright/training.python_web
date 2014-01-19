@@ -9,10 +9,13 @@ def response_ok(body, mimetype):
     """returns a basic HTTP response"""
     resp = []
     resp.append("HTTP/1.1 200 OK")
-    resp.append("Content-Type: text/plain")
+    #resp.append("Content-Type: text/plain")
+    resp.append("Content-Type: ")
+    resp.append(mimetype)
     resp.append("")
-    resp.append("this is a pretty minimal response")
-    return ("\r\n".join(resp), body, mimetype)
+    #resp.append("this is a pretty minimal response")
+    resp.append(body)
+    return "\r\n".join(resp)
 
 
 def response_method_not_allowed():
@@ -26,7 +29,7 @@ def response_method_not_allowed():
 def response_not_found():
     """returns a 404 Response Not Found response"""
     resp = []
-    resp.append("HTTP/1.1 404 Response Not Found")
+    resp.append('HTTP/1.1 404 Not Found')
     resp.append("")
     return "\r\n".join(resp)
 
@@ -43,34 +46,25 @@ def parse_request(request):
 
 def resolve_uri(uri):
 	
-	dirlist = []
+	body = ''
+	mimetype = ''
 	
-	mimetype = ""
-	
-	filecont = ""
-	
-	if os.path.isdir(uri):
-	
-		dirlist = os.listdir(uri)
+	if uri == '/a_web_page.html': 
+		path = "webroot{0}".format(uri)
+		body = open(path, 'rb').read()
+		mimetype = 'text/html'
 		
-		mimetype = "text/plain"
+	elif uri == '/make_time.py':
+		mimetype = 'text/x-python'
 		
-		return (dirlist, mimetype)
-	
-	elif os.path.isfile(uri):
-	
-		filecont = uri.read()
-		
-		url = urllib.pathname2url(uri)
-		
-		mimetype = mimetypes.guess_type(url)
-		
-		return (filecont, mimetype)
+	elif uri == '/sample.txt':
+		mimetype = 'text/plain'
 		
 	else:
-	
 		response_not_found()
-
+		
+	return (body, mimetype)
+	
 
 def server():
     address = ('127.0.0.1', 10000)
