@@ -6,16 +6,27 @@ import urllib
 
 
 def response_ok(body, mimetype):
-    """returns a basic HTTP response"""
-    resp = []
-    resp.append("HTTP/1.1 200 OK")
-    #resp.append("Content-Type: text/plain")
-    resp.append("Content-Type: ")
-    resp.append(mimetype)
-    resp.append("")
-    #resp.append("this is a pretty minimal response")
-    resp.append(body)
-    return "\r\n".join(resp)
+
+	#print "body: %s" % (body)
+	#print "mimetype: %s" % (mimetype)
+	
+	"""returns a basic HTTP response"""
+	resp = []
+	resp.append("HTTP/1.1 200 OK")
+	#resp.append("Content-Type: text/plain")
+	
+	str = "Content-Type: "
+	str += mimetype
+	
+	#resp.append("Content-Type: ")
+	#resp.append(mimetype)
+	
+	resp.append(str)
+	
+	resp.append("")
+	#resp.append("this is a pretty minimal response")
+	resp.append(body)
+	return "\r\n".join(resp)
 
 
 def response_method_not_allowed():
@@ -46,23 +57,55 @@ def parse_request(request):
 
 def resolve_uri(uri):
 	
+	#print "*********RECEIVED %s" % (uri)
+	
+	uri_parts = uri.split()
+	
+	for parts in uri_parts:
+		print parts
+	
 	body = ''
 	mimetype = ''
 	
-	if uri == '/a_web_page.html': 
-		path = "webroot{0}".format(uri)
-		body = open(path, 'rb').read()
-		mimetype = 'text/html'
-		
-	elif uri == '/make_time.py':
-		mimetype = 'text/x-python'
-		
-	elif uri == '/sample.txt':
-		mimetype = 'text/plain'
+	if len(uri_parts) > 1:
+		to_match = uri_parts[1]
 		
 	else:
-		response_not_found()
+		to_match = uri_parts[0]
+	
+	if to_match == '/a_web_page.html': 
+		#path = "webroot{0}".format(uri)
+		#body = open(path, 'rb').read()
+		body = '/a_web_page.html'
+		mimetype = 'text/html'
 		
+	elif to_match == '/make_time.py':
+		mimetype = 'text/x-python'
+		
+	elif to_match == '/':
+		body = 'a_web_page.html images make_time.py sample.txt'
+		mimetype = 'text/plain'
+	
+	elif to_match == '/sample.txt':
+		mimetype = 'text/plain'
+		
+	elif to_match == 'JPEG_example.jpg':
+		mimetype = 'image/jpeg'
+		
+	elif to_match == '/images/JPEG_example.jpg':
+		mimetype = 'image/jpeg'
+		
+	elif to_match == 'sample_1.png':
+		mimetype = 'image/png'
+		
+	elif to_match == 'example.com':
+		mimetype = response_not_found()
+		
+	else:
+		mimetype = response_not_found()
+		
+	#print "*********RETURNING %s" % (mimetype)
+	
 	return (body, mimetype)
 	
 
@@ -98,6 +141,9 @@ def server():
                 else:
                     
                     body, ext = resolve_uri(request)
+                    
+                    #print "*****body: %s" % (body)
+                    #print "*****ext: %s" % (ext)
                     
                     response = response_ok(body, ext)
 
