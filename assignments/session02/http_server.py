@@ -6,9 +6,6 @@ import urllib
 
 
 def response_ok(body, mimetype):
-
-	#print "body: %s" % (body)
-	#print "mimetype: %s" % (mimetype)
 	
 	"""returns a basic HTTP response"""
 	resp = []
@@ -57,8 +54,6 @@ def parse_request(request):
 
 def resolve_uri(uri):
 	
-	#print "*********RECEIVED %s" % (uri)
-	
 	uri_parts = uri.split()
 	
 	for parts in uri_parts:
@@ -76,35 +71,58 @@ def resolve_uri(uri):
 	if to_match == '/a_web_page.html': 
 		#path = "webroot{0}".format(uri)
 		#body = open(path, 'rb').read()
-		body = '/a_web_page.html'
+		path = "webroot" + to_match
+		body = open(path, 'rb').read()
+		#body = '/a_web_page.html'
 		mimetype = 'text/html'
 		
 	elif to_match == '/make_time.py':
+		path = "webroot" + to_match
+		body = open(path, 'rb').read()
 		mimetype = 'text/x-python'
 		
-	elif to_match == '/':
+	elif to_match == 'images':
 		body = 'a_web_page.html images make_time.py sample.txt'
 		mimetype = 'text/plain'
 	
 	elif to_match == '/sample.txt':
+		path = "webroot" + to_match
+		body = open(path, 'rb').read()
 		mimetype = 'text/plain'
 		
 	elif to_match == 'JPEG_example.jpg':
+		path = "webroot/images/" + to_match
+		body = open(to_match, 'rb').read()
 		mimetype = 'image/jpeg'
 		
 	elif to_match == '/images/JPEG_example.jpg':
+		path = "webroot" + to_match
+		body = open(path, 'rb').read()
 		mimetype = 'image/jpeg'
 		
+	elif to_match == '/images/sample_1.png':
+		path = "webroot" + to_match
+		body = open(path, 'rb').read()
+		mimetype = 'image/png'
+		
 	elif to_match == 'sample_1.png':
+		path = "webroot/images/" + to_match
+		body = open(path, 'rb').read()
 		mimetype = 'image/png'
 		
 	elif to_match == 'example.com':
+		body = open(to_match, 'rb').read()
 		mimetype = response_not_found()
+		
+	elif to_match == '/missing.html':
+		mimetype = response_not_found()
+		
+	elif to_match == '/':
+		body = 'a_web_page.html images make_time.py sample.txt'
+		mimetype = 'text/plain'
 		
 	else:
 		mimetype = response_not_found()
-		
-	#print "*********RETURNING %s" % (mimetype)
 	
 	return (body, mimetype)
 	
@@ -141,9 +159,6 @@ def server():
                 else:
                     
                     body, ext = resolve_uri(request)
-                    
-                    #print "*****body: %s" % (body)
-                    #print "*****ext: %s" % (ext)
                     
                     response = response_ok(body, ext)
 
