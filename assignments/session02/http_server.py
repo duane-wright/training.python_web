@@ -6,26 +6,18 @@ import urllib
 
 
 def response_ok(body, mimetype):
-	
+
 	"""returns a basic HTTP response"""
 	resp = []
 	resp.append("HTTP/1.1 200 OK")
 	#resp.append("Content-Type: text/plain")
-	
-	str = "Content-Type: "
-	str += mimetype
-	
-	#resp.append("Content-Type: ")
-	#resp.append(mimetype)
-	
-	resp.append(str)
-	
+	resp.append("Content-Type: {}".format(mimetype))
 	resp.append("")
 	#resp.append("this is a pretty minimal response")
 	resp.append(body)
 	return "\r\n".join(resp)
-
-
+	
+	
 def response_method_not_allowed():
     """returns a 405 Method Not Allowed response"""
     resp = []
@@ -54,76 +46,42 @@ def parse_request(request):
 
 def resolve_uri(uri):
 	
-	uri_parts = uri.split()
-	
-	for parts in uri_parts:
-		print parts
-	
 	body = ''
 	mimetype = ''
 	
-	if len(uri_parts) > 1:
-		to_match = uri_parts[1]
-		
+	path = ''
+
+	# if uri is a directory		
+	if '.' not in uri:
+		path = "webroot" + uri
+		if os.path.exists(path):
+			body = os.listdir(path)
+			mimetype = 'text/plain'
+		else:
+			raise ValueError(404)
+			response_not_found()
+	# if uri is an image file
+	elif uri[-3:] == "jpg" or uri[-3:] == "png":
+		path = "webroot/images/" + uri
+		if os.path.exists(path):
+			body = open(uri, 'rb').read()
+			mimetype = mimetypes.guess_type(uri)
+		else:
+			raise ValueError(404)
+			response_not_found()
+	# if uri is a non-image file	
+	elif '.' in uri:
+		path = "webroot" + uri
+		if os.path.exists(path):
+			body = open(path, 'rb').read()
+			mimetype = mimetypes.guess_type(uri)[0]
+		else:
+			raise ValueError(404)
+			response_not_found()	
 	else:
-		to_match = uri_parts[0]
-	
-	if to_match == '/a_web_page.html': 
-		#path = "webroot{0}".format(uri)
-		#body = open(path, 'rb').read()
-		path = "webroot" + to_match
-		body = open(path, 'rb').read()
-		#body = '/a_web_page.html'
-		mimetype = 'text/html'
+		raise ValueError(404)
+		response_not_found()
 		
-	elif to_match == '/make_time.py':
-		path = "webroot" + to_match
-		body = open(path, 'rb').read()
-		mimetype = 'text/x-python'
-		
-	elif to_match == 'images':
-		body = 'a_web_page.html images make_time.py sample.txt'
-		mimetype = 'text/plain'
-	
-	elif to_match == '/sample.txt':
-		path = "webroot" + to_match
-		body = open(path, 'rb').read()
-		mimetype = 'text/plain'
-		
-	elif to_match == 'JPEG_example.jpg':
-		path = "webroot/images/" + to_match
-		body = open(to_match, 'rb').read()
-		mimetype = 'image/jpeg'
-		
-	elif to_match == '/images/JPEG_example.jpg':
-		path = "webroot" + to_match
-		body = open(path, 'rb').read()
-		mimetype = 'image/jpeg'
-		
-	elif to_match == '/images/sample_1.png':
-		path = "webroot" + to_match
-		body = open(path, 'rb').read()
-		mimetype = 'image/png'
-		
-	elif to_match == 'sample_1.png':
-		path = "webroot/images/" + to_match
-		body = open(path, 'rb').read()
-		mimetype = 'image/png'
-		
-	elif to_match == 'example.com':
-		body = open(to_match, 'rb').read()
-		mimetype = response_not_found()
-		
-	elif to_match == '/missing.html':
-		mimetype = response_not_found()
-		
-	elif to_match == '/':
-		body = 'a_web_page.html images make_time.py sample.txt'
-		mimetype = 'text/plain'
-		
-	else:
-		mimetype = response_not_found()
-	
 	return (body, mimetype)
 	
 
@@ -154,13 +112,11 @@ def server():
                 except NotImplementedError:
                     response = response_method_not_allowed()
                 
-                # response_ok(body, mimetype)
-                
                 else:
                     
-                    body, ext = resolve_uri(request)
+                    body, mimetype = resolve_uri(parse_request(request))
                     
-                    response = response_ok(body, ext)
+                    response = response_ok(body, mimetype)
 
                 print >>sys.stderr, 'sending response'
                 conn.sendall(response)
